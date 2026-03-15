@@ -42,22 +42,28 @@ namespace PawnTrackerMain.VEEPatches
                     var typeName = kvp.Key.Substring(0, kvp.Key.LastIndexOf('.'));
                     var methodName = kvp.Key.Substring(kvp.Key.LastIndexOf('.') + 1);
                     var type = AccessTools.TypeByName(typeName);
-                    if (type != null)
+                    if (type == null)
                     {
-                        var method = AccessTools.Method(type, methodName);
-                        if (method != null)
-                        {
-                            // Ensure the method is public or at least internal
-                            var postfixMethod = typeof(Patches).GetMethod(kvp.Value.Method.Name, BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
-                            if (postfixMethod == null)
-                            {
-                                Log.Warning($"Could not find method: {kvp.Value.Method.Name}");
-                                continue;
-                            }
-                            var postfix = new HarmonyMethod(postfixMethod);
-                            harmony.Patch(method, null, postfix);
-                        }
+                        Log.Warning($"VEE patch skipped: type not found ({typeName}).");
+                        continue;
                     }
+
+                    var method = AccessTools.Method(type, methodName);
+                    if (method == null)
+                    {
+                        Log.Warning($"VEE patch skipped: method not found ({kvp.Key}).");
+                        continue;
+                    }
+
+                    var postfixMethod = typeof(Patches).GetMethod(kvp.Value.Method.Name, BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+                    if (postfixMethod == null)
+                    {
+                        Log.Warning($"Could not find method: {kvp.Value.Method.Name}");
+                        continue;
+                    }
+
+                    var postfix = new HarmonyMethod(postfixMethod);
+                    harmony.Patch(method, null, postfix);
                 }
                 Log.Message("VEE-specific patches applied successfully.");
             }

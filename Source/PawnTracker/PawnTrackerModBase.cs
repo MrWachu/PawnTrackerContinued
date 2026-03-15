@@ -130,12 +130,14 @@ namespace PawnTackerMain
             ConstructorInfo targetConstructor = AccessTools.Constructor(typeof(IndividualThoughtToAdd), new Type[] { typeof(ThoughtDef), typeof(Pawn), typeof(Pawn), typeof(float), typeof(float) });
             if (targetConstructor == null)
             {
-                Log.Error("Target constructor not found.");
-                return;
+                Log.Warning("Patch skipped: IndividualThoughtToAdd constructor signature not found.");
             }
-            postfixMethodInfo = typeof(IndividualThoughtToAdd_Patch).GetMethod(nameof(IndividualThoughtToAdd_Patch.Postfix), BindingFlags.Static | BindingFlags.Public);
-            postfixHarmonyMethod = new HarmonyMethod(postfixMethodInfo);
-            PatchIfExists(targetConstructor, postfix: postfixHarmonyMethod);
+            else
+            {
+                postfixMethodInfo = typeof(IndividualThoughtToAdd_Patch).GetMethod(nameof(IndividualThoughtToAdd_Patch.Postfix), BindingFlags.Static | BindingFlags.Public);
+                postfixHarmonyMethod = new HarmonyMethod(postfixMethodInfo);
+                PatchIfExists(targetConstructor, postfix: postfixHarmonyMethod);
+            }
 
             Log.Message("Common patches applied successfully");
         }
