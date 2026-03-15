@@ -95,49 +95,63 @@ namespace PawnTackerMain
             MethodInfo targetMethod = AccessTools.Method(typeof(LetterStack), "ReceiveLetter", new Type[] { typeof(Letter), typeof(string) });
             MethodInfo postfixMethodInfo = typeof(LetterStack_Patch).GetMethod(nameof(LetterStack_Patch.Postfix), BindingFlags.Static | BindingFlags.Public);
             HarmonyMethod postfixHarmonyMethod = new HarmonyMethod(postfixMethodInfo);
-            harmony.Patch(targetMethod, postfix: postfixHarmonyMethod);
+            PatchIfExists(targetMethod, postfix: postfixHarmonyMethod);
 
             //Log.Message("Patching LetterStack_Patch2");
             //Patch LetterStack_Patch2
             targetMethod = AccessTools.Method(typeof(LetterStack), "ReceiveLetter", new Type[] {typeof(TaggedString), typeof(TaggedString), typeof(LetterDef), typeof(LookTargets), typeof(Faction), typeof(Quest), typeof(List<ThingDef>), typeof(string)});
             postfixMethodInfo = typeof(LetterStack_Patch2).GetMethod(nameof(LetterStack_Patch2.Postfix), BindingFlags.Static | BindingFlags.Public);
             postfixHarmonyMethod = new HarmonyMethod(postfixMethodInfo);
-            harmony.Patch(targetMethod, postfix: postfixHarmonyMethod);
+            PatchIfExists(targetMethod, postfix: postfixHarmonyMethod);
 
             //Log.Message("Patching PawnGenerator_GeneratePawn_Patch1");
             //Patch PawnGenerator_GeneratePawn_Patch1
             targetMethod = AccessTools.Method(typeof(PawnGenerator), "GeneratePawn", new Type[] {typeof(PawnKindDef), typeof(Faction)});
             postfixMethodInfo = typeof(PawnGenerator_GeneratePawn_Patch1).GetMethod(nameof(PawnGenerator_GeneratePawn_Patch1.Postfix), BindingFlags.Static | BindingFlags.Public);
             postfixHarmonyMethod = new HarmonyMethod(postfixMethodInfo);
-            harmony.Patch(targetMethod, postfix: postfixHarmonyMethod);
+            PatchIfExists(targetMethod, postfix: postfixHarmonyMethod);
 
             //Log.Message("Patching PawnGenerator_GeneratePawn_Patch2");
             //Patch PawnGenerator_GeneratePawn_Patch2
             targetMethod = AccessTools.Method(typeof(PawnGenerator), "GeneratePawn", new Type[] {typeof(PawnGenerationRequest)});
             postfixMethodInfo = typeof(PawnGenerator_GeneratePawn_Patch2).GetMethod(nameof(PawnGenerator_GeneratePawn_Patch2.Postfix), BindingFlags.Static | BindingFlags.Public);
             postfixHarmonyMethod = new HarmonyMethod(postfixMethodInfo);
-            harmony.Patch(targetMethod, postfix: postfixHarmonyMethod);
+            PatchIfExists(targetMethod, postfix: postfixHarmonyMethod);
 
             //Log.Message("Patching Pawn_HealthTracker_Patch");
             //Patch Pawn_HealthTracker_Patch
             targetMethod = AccessTools.Method(typeof(Pawn_HealthTracker), "AddHediff", new Type[] {typeof(Hediff), typeof(BodyPartRecord), typeof(DamageInfo?), typeof(DamageWorker.DamageResult)});
             postfixMethodInfo = typeof(Pawn_HealthTracker_Patch).GetMethod(nameof(Pawn_HealthTracker_Patch.Postfix), BindingFlags.Static | BindingFlags.Public);
             postfixHarmonyMethod = new HarmonyMethod(postfixMethodInfo);
-            harmony.Patch(targetMethod, postfix: postfixHarmonyMethod);
+            PatchIfExists(targetMethod, postfix: postfixHarmonyMethod);
 
             //Log.Message("Patching IndividualThoughtToAdd");
             //Patch IndividualThoughtToAdd
             ConstructorInfo targetConstructor = AccessTools.Constructor(typeof(IndividualThoughtToAdd), new Type[] { typeof(ThoughtDef), typeof(Pawn), typeof(Pawn), typeof(float), typeof(float) });
             if (targetConstructor == null)
             {
-                Log.Error("Target constructor not found.");
-                return;
+                Log.Warning("Patch skipped: IndividualThoughtToAdd constructor signature not found.");
             }
-            postfixMethodInfo = typeof(IndividualThoughtToAdd_Patch).GetMethod(nameof(IndividualThoughtToAdd_Patch.Postfix), BindingFlags.Static | BindingFlags.Public);
-            postfixHarmonyMethod = new HarmonyMethod(postfixMethodInfo);
-            harmony.Patch(targetConstructor, postfix: postfixHarmonyMethod);
+            else
+            {
+                postfixMethodInfo = typeof(IndividualThoughtToAdd_Patch).GetMethod(nameof(IndividualThoughtToAdd_Patch.Postfix), BindingFlags.Static | BindingFlags.Public);
+                postfixHarmonyMethod = new HarmonyMethod(postfixMethodInfo);
+                PatchIfExists(targetConstructor, postfix: postfixHarmonyMethod);
+            }
 
             Log.Message("Common patches applied successfully");
+        }
+
+
+        private void PatchIfExists(MethodBase targetMethod, HarmonyMethod prefix = null, HarmonyMethod postfix = null)
+        {
+            if (targetMethod == null)
+            {
+                Log.Warning("Pawn Tracker skipped a patch because the target method no longer exists in this RimWorld version.");
+                return;
+            }
+
+            harmony.Patch(targetMethod, prefix: prefix, postfix: postfix);
         }
 
         private void PatchHospitality()

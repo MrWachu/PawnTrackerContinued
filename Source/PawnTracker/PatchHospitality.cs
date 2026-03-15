@@ -23,23 +23,26 @@ namespace PawnTrackerMain.HospitalityPatches
         private static MethodInfo createLordForPawnMethod;
         private static MethodInfo isGuestMethod;
         private static MethodInfo joinLordMethod;
-        public static Type guestUtilityType = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(asm => asm.GetName().Name == "Hospitality").GetType("Hospitality.Utilities.GuestUtility");
+        private static Type guestUtilityType;
         static Patches()
         {
-            if (ModsConfig.IsActive("Orion.Hospitality"))
+            if (!ModsConfig.IsActive("Orion.Hospitality"))
             {
-
-                if (guestUtilityType != null)
-                {
-                    if (guestUtilityType != null)
-                    {
-                        recruitMethod = guestUtilityType.GetMethod("Recruit");
-                        createLordForPawnMethod = guestUtilityType.GetMethod("CreateLordForPawn");
-                        joinLordMethod = guestUtilityType.GetMethod(name: "JoinLord");
-                        isGuestMethod = guestUtilityType.GetMethod("IsGuest");
-                    }
-                }
+                return;
             }
+
+            var hospitalityAssembly = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(asm => asm.GetName().Name == "Hospitality");
+            guestUtilityType = hospitalityAssembly?.GetType("Hospitality.Utilities.GuestUtility");
+            if (guestUtilityType == null)
+            {
+                Log.Warning("Hospitality is active but Hospitality.Utilities.GuestUtility was not found. Hospitality patches will be skipped.");
+                return;
+            }
+
+            recruitMethod = guestUtilityType.GetMethod("Recruit");
+            createLordForPawnMethod = guestUtilityType.GetMethod("CreateLordForPawn");
+            joinLordMethod = guestUtilityType.GetMethod(name: "JoinLord");
+            isGuestMethod = guestUtilityType.GetMethod("IsGuest");
         }
 
         public static void ApplyPatches(Harmony harmony)
@@ -49,17 +52,29 @@ namespace PawnTrackerMain.HospitalityPatches
                 harmony.Patch(recruitMethod,
                     prefix: new HarmonyMethod(typeof(Patches), nameof(HospitalityGuestUtility_Recruit_Patch_Prefix)));
             }
-            
+            else
+            {
+                Log.Warning("Hospitality patch skipped: Recruit method not found.");
+            }
+
             if (createLordForPawnMethod != null)
             {
                 harmony.Patch(createLordForPawnMethod,
                     prefix: new HarmonyMethod(typeof(Patches), nameof(HospitalityGuestUtility_CreateLordForPawn_Patch_Postfix)));
+            }
+            else
+            {
+                Log.Warning("Hospitality patch skipped: CreateLordForPawn method not found.");
             }
 
             if (joinLordMethod != null)
             {
                 harmony.Patch(joinLordMethod,
                     postfix: new HarmonyMethod(typeof(Patches), nameof(HospitalityGuestUtility_JoinLord_Patch_Postfix)));
+            }
+            else
+            {
+                Log.Warning("Hospitality patch skipped: JoinLord method not found.");
             }
         }
 

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Verse;
 
@@ -21,8 +22,9 @@ namespace PawnTrackerMain
             {
                 if (def.comps == null) 
                 {
-                    continue;
+                    def.comps = new List<CompProperties>();
                 }
+
                 if (!def.comps.Any(c => c.compClass == compType))
                 {
                     def.comps.Add(new CompProperties_PawnTracker());
